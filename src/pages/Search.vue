@@ -1,112 +1,131 @@
 <template>
-  <section class="search-container">
-    <form @submit.prevent="handleSubmit" class="search-form">
-      <div class="form-group">
-        <label for="destination">Destination</label>
-        <input v-model="form.destination" type="text" id="destination" required />
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="checkin">Check-in</label>
-          <input v-model="form.checkin" type="date" id="checkin" required />
-        </div>
-        <div class="form-group">
-          <label for="checkout">Check-out</label>
-          <input v-model="form.checkout" type="date" id="checkout" required />
-        </div>
-      </div>
+  <div>
+    <h2 class="search-title">Find your perfect stay</h2>
+    <form class="search-form" @submit.prevent="handleSearch">
+      <input
+        type="text"
+        v-model="query"
+        placeholder="Search by hotel, landmark, or location..."
+      />
 
       <div class="form-group">
-        <label for="guests">Guests</label>
-        <select v-model="form.guests" id="guests">
-          <option value="1">1 Guest</option>
-          <option value="2">2 Guests</option>
-          <option value="3">3 Guests</option>
-          <option value="4">4 Guests</option>
-        </select>
+        <label>
+          From
+          <input type="date" v-model="fromDate" />
+        </label>
+        <label>
+          To
+          <input type="date" v-model="toDate" />
+        </label>
       </div>
 
-      <button type="submit" class="btn">Search</button>
+      <label>
+        Guests
+        <input type="number" v-model="guests" min="1" />
+      </label>
+
+      <button type="submit">Search</button>
     </form>
-  </section>
+  </div>
 </template>
 
 <script>
-import { searchRooms } from '../services/services';
-import { useRouter } from 'vue-router';
-import { ref, reactive, computed, watch, onMounted } from 'vue';
-
+import { searchHotels } from '@/services/searchService'
 
 export default {
-    name: 'Search',
-    setup() {
-    const router = useRouter();
-    const form = reactive({
-        destination: '',
-        checkin: '',
-        checkout: '',
-        guests: '1'
-    });
-
-    const handleSubmit = async () => {
-        try {
-        const results = await searchRooms(form);
-        router.push({ path: '/search-results', query: { data: JSON.stringify(results) } });
-        } catch (err) {
-        alert('Search failed: ' + err.message);
-        }
-    };
-
-    return { form, handleSubmit };
+  name: 'SearchPage',
+  data() {
+    return {
+      query: '',
+      fromDate: '',
+      toDate: '',
+      guests: 1,
     }
+  },
+  methods: {
+    async handleSearch() {
+      try {
+        const params = {
+          q: this.query || '',
+          guests: this.guests,
+          sort_by: 'price_asc',
+          page: 1,
+          per_page: 10,
+        }
 
-};
+        if (this.fromDate) params.from_date = this.fromDate
+        if (this.toDate) params.to_date = this.toDate
+
+        // ✅ Call the search API via abstracted service
+        const response = await searchHotels(params)
+
+        // ✅ Route to results page with params in URL
+        this.$router.push({
+          name: 'ResultsPage',
+          query: params,
+        })
+      } catch (error) {
+        console.error('Search failed:', error)
+      }
+    },
+  },
+}
 </script>
 
 <style scoped>
-.search-container {
-  max-width: 600px;
-  margin: 2rem auto;
-  background: #fff;
-  padding: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+.search-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1.5rem;
 }
+
 .search-form {
   display: flex;
   flex-direction: column;
-}
-.form-group {
-  margin-bottom: 1.2rem;
-}
-label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  color: #333;
-}
-input, select {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-}
-.form-row {
-  display: flex;
   gap: 1rem;
 }
-.form-row .form-group {
-  flex: 1;
+
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+  padding: 0.75rem 0rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 100%;
 }
-.btn {
-  background-color: #4C51BF;
+
+input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.form-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-group label {
+  flex: 1 1 45%;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+button[type="submit"] {
+  background-color: #6366f1;
   color: white;
-  padding: 0.8rem;
+  padding: 0.9rem;
   border: none;
-  border-radius: 6px;
+  font-weight: bold;
+  border-radius: 8px;
   cursor: pointer;
+  transition: background 0.3s;
 }
-.btn:hover {
-  background-color: #3C3EAB;
+
+button[type="submit"]:hover {
+  background-color: #4f46e5;
 }
 </style>

@@ -1,171 +1,130 @@
+<script setup>
+import { useSearchStore } from '../stores/searchStore';
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+
+const store = useSearchStore();
+const hotels = computed(() => store.hotels);
+const router = useRouter();
+
+function goToRoom(roomId) {
+  router.push({ path: '/search/details', query: { room_id: roomId } });
+}
+</script>
+
 <template>
-  <div class="container">
-    <div class="trace">
-      <div class="dates">Jun 17, 2025 → Jun 18, 2025</div>
-      <div class="options">
-        <div>1 Night | 1 Guest</div>
-        <a href="#">Sort by: Lowest Price ▾</a>
+  <div class="results-page">
+    <div class="results-header">
+      <h1>Available Rooms</h1>
+      <router-link to="/search" class="back-button">← Back to Search</router-link>
+    </div>
+
+    <div v-if="hotels.length === 0" class="no-results">
+      <p>No rooms found for your search criteria.</p>
+    </div>
+
+    <div v-else class="hotel-list">
+      <div
+        v-for="hotel in hotels"
+        :key="hotel.id"
+        class="hotel-card"
+        @click="goToRoom(hotel.room.id)"
+      >
+        <img :src="hotel.coverimage" alt="Room image" />
+        <div class="info">
+          <h2>{{ hotel.name }}</h2>
+          <p class="location">{{ hotel.address }}</p>
+          <p class="type">{{ hotel.room.room_type }} • {{ hotel.room.beds }}</p>
+          <p class="price">${{ hotel.price.toFixed(2) }} / night</p>
+        </div>
       </div>
     </div>
-    <ul class="room-list">
-      <li class="room" v-for="room in rooms" :key="room.id">
-        <img :src="room.image" :alt="room.name" />
-        <div class="room-info">
-          <h3>{{ room.name }}</h3>
-          <div class="subtitle">{{ room.subtitle }}</div>
-          <p>{{ room.description }}</p>
-        </div>
-        <div class="room-action">
-          <div class="price">${{ room.price }} <span>/night</span></div>
-          <div class="note">Subject to GST and charges</div>
-          <button @click="bookRoom(room)">Book Room</button>
-        </div>
-      </li>
-    </ul>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'SearchResults',
-  data() {
-    return {
-      rooms: [
-        {
-          id: 1,
-          name: 'Room 1 Title',
-          subtitle: 'Lorem ipsum dolor sit amet',
-          description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-          image: 'https://via.placeholder.com/340x210',
-          price: 1080
-        },
-        {
-          id: 2,
-          name: 'Room 2 Title',
-          subtitle: 'Lorem ipsum dolor sit amet',
-          description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-          image: 'https://via.placeholder.com/340x210',
-          price: 1280
-        }
-      ]
-    };
-  },
-  methods: {
-    bookRoom(room) {
-      this.$router.push({ name: 'booking', query: { roomId: room.id } });
-    }
-  }
-};
-</script>
-
 <style scoped>
-.container {
-  max-width: 1100px;
-  margin: auto;
+.results-page {
   padding: 2rem;
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.steps {
+.results-header {
   display: flex;
-  list-style: none;
-  padding: 0;
-  margin-bottom: 2rem;
   justify-content: space-between;
-  border-bottom: 1px solid #ddd;
-  counter-reset: step;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
-.steps li {
-  position: relative;
-  text-align: center;
-  flex: 1;
-  padding-bottom: 1rem;
-  font-weight: 500;
-  color: #999;
+.results-header h1 {
+  font-size: 1.8rem;
+  margin: 0;
 }
 
-.steps li.active {
+.back-button {
+  font-size: 0.95rem;
   color: #4f46e5;
-  font-weight: 600;
+  text-decoration: none;
+  font-weight: 500;
 }
 
-.steps li.active::after {
-  background: #4f46e5;
+.back-button:hover {
+  color: #3730a3;
 }
 
-.results {
+.no-results {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.hotel-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
 }
 
-.card {
-  background: #fff;
-  border-radius: 10px;
+.hotel-card {
+  background: white;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-.card img {
+.hotel-card:hover {
+  transform: translateY(-4px);
+}
+
+.hotel-card img {
   width: 100%;
   height: 180px;
   object-fit: cover;
 }
 
-.card-body {
-  padding: 1.5rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+.hotel-card .info {
+  padding: 1rem;
 }
 
-.card-body h3 {
-  font-size: 1.2rem;
-  margin-bottom: 0.4rem;
-  color: #2d3748;
+.hotel-card h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.25rem 0;
 }
 
-.card-body p {
-  color: #6b7280;
+.hotel-card .location {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.hotel-card .type {
   font-size: 0.95rem;
-  margin-bottom: 1.2rem;
+  margin: 0.25rem 0;
 }
 
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.price {
-  font-size: 1.2rem;
-  font-weight: bold;
+.hotel-card .price {
+  font-weight: 600;
   color: #4f46e5;
-}
-
-.price span {
-  font-size: 0.85rem;
-  font-weight: normal;
-  color: #6b7280;
-}
-
-.btn {
-  background: #4f46e5;
-  color: #fff;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.btn:hover {
-  background: #4338ca;
+  margin-top: 0.5rem;
 }
 </style>
-

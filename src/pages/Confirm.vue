@@ -1,117 +1,134 @@
 <template>
-  <section class="confirm-container">
-    <h2 class="title">Confirm Your Booking</h2>
+  <section class="confirmation-container">
+    <div class="confirmation-box">
+      <div class="checkmark">✔</div>
+      <h2 class="headline">Booking Confirmed!</h2>
+      <p class="subhead">Thanks, {{ guestName }}. Your reservation is complete.</p>
 
-    <div class="card summary-card">
-      <h3>Guest Information</h3>
-      <p><strong>Name:</strong> {{ guest.first_name }} {{ guest.last_name }}</p>
-      <p><strong>Email:</strong> {{ guest.email }}</p>
-      <p><strong>Phone:</strong> {{ guest.phone }}</p>
-    </div>
+      <div class="summary-card">
+        <h3>{{ hotelName }}</h3>
+        <p class="room">{{ roomType }} — ${{ pricePerNight.toFixed(2) }}/night</p>
+        <p><strong>Check-in:</strong> {{ fromDate }}</p>
+        <p><strong>Check-out:</strong> {{ toDate }}</p>
+        <p><strong>Guests:</strong> {{ guests }}</p>
+        <p><strong>Total:</strong> ${{ totalPrice.toFixed(2) }}</p>
+      </div>
 
-    <div class="card details-card">
-      <h3>Booking Details</h3>
-      <p><strong>Room:</strong> {{ booking.roomName }}</p>
-      <p><strong>Dates:</strong> {{ booking.checkin }} – {{ booking.checkout }}</p>
-      <p><strong>Guests:</strong> {{ booking.guests }}</p>
-      <p><strong>Total Price:</strong> ${{ booking.totalPrice }}</p>
-    </div>
-
-    <div class="actions">
-      <router-link to="/search/details" class="btn secondary">Back</router-link>
-      <button class="btn primary" @click="confirmBooking">Confirm & Pay</button>
+      <router-link to="/dashboard" class="dashboard-button">
+        Back to Dashboard
+      </router-link>
     </div>
   </section>
 </template>
 
-<script>
-export default {
-  name: 'ConfirmBooking',
-  data() {
-    return {
-      guest: {
-        first_name: '',
-        last_name: '',
-        email: '',
-        phone: ''
-      },
-      booking: {
-        roomName: '',
-        checkin: '',
-        checkout: '',
-        guests: 1,
-        totalPrice: 0
-      }
-    };
-  },
-  created() {
-    // In a real app, you'd fetch or get this from a store or route state
-    const state = this.$route.params.booking || {};
-    Object.assign(this.guest, state.guest || {});
-    Object.assign(this.booking, state.booking || {});
-  },
-  methods: {
-    confirmBooking() {
-      // TODO: Call booking API and handle response
-      this.$router.push('/search/thank-you'); // Or show a confirmation page/modal
-    }
-  }
-};
+<script setup>
+import { useRoute } from 'vue-router'
+import { computed } from 'vue'
+import { useSearchStore } from '../stores/searchStore'
+
+import { useUserStore } from '../stores/userStore'
+
+const userStore = useUserStore()
+
+// Access route params
+const route = useRoute()
+const store = useSearchStore()
+
+const roomId = route.query.room_id
+const fromDate = route.query.from_date
+const toDate = route.query.to_date
+const guests = route.query.guests || 1
+
+const hotel = computed(() =>
+  store.hotels.find(h => h.room?.id === roomId)
+)
+
+const hotelName = computed(() => hotel.value?.name || 'Hotel')
+const roomType = computed(() => hotel.value?.room?.room_type || '')
+const pricePerNight = computed(() => hotel.value?.room?.price_per_night || 0)
+
+function dateDiff(start, end) {
+  const d1 = new Date(start)
+  const d2 = new Date(end)
+  return Math.max((d2 - d1) / (1000 * 60 * 60 * 24), 1)
+}
+const nights = computed(() => dateDiff(fromDate, toDate))
+const totalPrice = computed(() => pricePerNight.value * nights.value)
+
+const guestName = userStore.user.first_name + ' ' + userStore.user.last_name; // You can later fetch this from the user profile if needed
 </script>
 
 <style scoped>
-.confirm-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 10px;
-}
-
-.title {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #2d3748;
-}
-
-.card {
-  padding: 1.5rem;
-  border-radius: 8px;
-  background: #f9fafb;
-  margin-bottom: 1.5rem;
-}
-
-.card h3 {
-  margin-top: 0;
-  margin-bottom: 0.75rem;
-  color: #4f46e5;
-}
-
-.card p {
-  margin: 0.4rem 0;
-}
-
-.actions {
+.confirmation-container {
   display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
+  justify-content: center;
+  padding: 60px 20px;
+  background: #f8fafc;
+  min-height: 80vh;
+  box-sizing: border-box;
 }
 
-.btn {
-  padding: 0.8rem 1.6rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
+.confirmation-box {
+  background: white;
+  padding: 40px;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
-.btn.primary {
-  background-color: #4f46e5;
+.checkmark {
+  font-size: 60px;
+  color: #22c55e;
+  margin-bottom: 20px;
+}
+
+.headline {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.subhead {
+  font-size: 16px;
+  color: #475569;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background-color: #f1f5f9;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: left;
+  margin-bottom: 30px;
+  font-size: 15px;
+  color: #334155;
+}
+
+.summary-card h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.summary-card .room {
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.dashboard-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #3b82f6;
   color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
 }
-
-.btn.secondary {
-  background-color: #e2e8f0;
-  color: #333;
+.dashboard-button:hover {
+  background-color: #2563eb;
 }
 </style>

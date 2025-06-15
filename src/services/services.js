@@ -5,16 +5,38 @@ export function getUserProfile() {
   return apiFetch('/users/me');
 }
 
-export function searchRooms(searchData) {
-  return apiFetch('/search', {
-    method: 'POST',
-    body: JSON.stringify(searchData)
+export function updateUserProfile(data) {
+  return apiFetch('/users/me', {
+    method: 'PUT',
+    body: JSON.stringify(data)
   });
 }
 
+export function searchRooms(params) {
+  const query = new URLSearchParams(params).toString();
+  return apiFetch(`/search/search?${query}`);
+}
+
 export function bookRoom(data) {
-  return apiFetch('/book', {
+  return apiFetch('/bookings/', {
     method: 'POST',
     body: JSON.stringify(data)
+  });
+}
+
+// ✅ NEW: Fetch all bookings
+export function getAllBookings() {
+  return apiFetch('/bookings/me');
+}
+
+// ✅ NEW: Fetch upcoming bookings only
+export function getUpComingBookings() {
+  return apiFetch('/bookings/me/upcoming');
+}
+
+// ✅ NEW: Cancel a booking
+export function cancelBooking(bookingId) {
+  return apiFetch(`/bookings/${bookingId}/cancel`, {
+    method: 'POST'
   });
 }

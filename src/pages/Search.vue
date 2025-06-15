@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="search-content">
     <h2 class="search-title">Find your perfect stay</h2>
     <form class="search-form" @submit.prevent="handleSearch">
       <input
@@ -29,8 +29,10 @@
   </div>
 </template>
 
+
 <script>
-import { searchHotels } from '@/services/searchService'
+import { searchRooms } from '../services/services';
+import { useSearchStore } from '../stores/searchStore';
 
 export default {
   name: 'SearchPage',
@@ -39,38 +41,46 @@ export default {
       query: '',
       fromDate: '',
       toDate: '',
-      guests: 1,
-    }
+      guests: 1
+    };
   },
   methods: {
     async handleSearch() {
+      const searchStore = useSearchStore();
+
+      const searchData = {
+        q: this.query || '',
+        from_date: this.fromDate,
+        to_date: this.toDate,
+        guests: this.guests,
+        sort_by: 'price_asc',
+        page: 1,
+        per_page: 10
+      };
+
       try {
-        const params = {
-          q: this.query || '',
-          guests: this.guests,
-          sort_by: 'price_asc',
-          page: 1,
-          per_page: 10,
-        }
+        const result = await searchRooms(searchData);
 
-        if (this.fromDate) params.from_date = this.fromDate
-        if (this.toDate) params.to_date = this.toDate
+        // Save all search parameters + result in the store
+        searchStore.setSearchData({
+          hotels: result,
+          fromDate: searchData.from_date,
+          toDate: searchData.to_date,
+          guests: searchData.guests,
+          q: searchData.q
+        });
 
-        // ✅ Call the search API via abstracted service
-        const response = await searchHotels(params)
+        // Navigate to results page
+        this.$router.push({ name: 'SearchResults' });
 
-        // ✅ Route to results page with params in URL
-        this.$router.push({
-          name: 'ResultsPage',
-          query: params,
-        })
-      } catch (error) {
-        console.error('Search failed:', error)
+      } catch (err) {
+        console.error('Search failed:', err.message);
       }
-    },
-  },
-}
+    }
+  }
+};
 </script>
+
 
 <style scoped>
 .search-title {
@@ -127,5 +137,12 @@ button[type="submit"] {
 
 button[type="submit"]:hover {
   background-color: #4f46e5;
+}
+
+.search-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 </style>

@@ -1,40 +1,56 @@
 <template>
-  <div class="container">
-    <div class="card">
-      <div class="card-header">Room Details</div>
-      <div class="card-body">
-        <div class="image-gallery">
-          <div class="main-image">
-            <img :src="currentImage" alt="Main Room Image" />
-          </div>
-          <div class="thumbnails">
-            <img
-              v-for="(img, index) in thumbnails"
-              :key="index"
-              :src="img"
-              :data-full="img"
-              :class="{ active: currentImage === img }"
-              @click="currentImage = img"
-              alt="Room Thumbnail"
-            />
-          </div>
+  <div class="room-wrapper">
+    <div v-if="loading" class="loader">Loading room details...</div>
+
+    <div v-else>
+      <!-- 🖼️ Hero Image -->
+      <div class="hero">
+        <img :src="room.images[0]" alt="Main room image" class="hero-image" />
+      </div>
+
+      <!-- 🖼️ Thumbnail Gallery -->
+      <div class="gallery-row">
+        <img
+          v-for="(img, index) in room.images"
+          :key="index"
+          :src="img"
+          :alt="'Room image ' + (index + 1)"
+        />
+      </div>
+
+      <!-- 📦 Room Info -->
+      <div class="details-section">
+        <router-link to="/search/results" class="back-button">← Back to Search Results</router-link>
+
+        <div class="top-bar">
+          <h1>{{ room.room_type }} Room</h1>
+          <span class="price">${{ room.price_per_night.toFixed(2) }} / night</span>
         </div>
-        <div class="room-info">
-          <h2>{{ room.name }}</h2>
-          <div class="subtitle">{{ room.description }}</div>
-          <p>{{ room.details }}</p>
-          <div class="Amenities">
-            <h3>Amenities</h3>
-            <ul>
-              <li v-for="(amenity, i) in room.amenities" :key="i">{{ amenity }}</li>
-            </ul>
-          </div>
+
+        <p class="description">{{ room.description }}</p>
+
+        <div class="meta">
+          <div><strong>Capacity:</strong> {{ room.capacity }} guest<span v-if="room.capacity > 1">s</span></div>
+          <div><strong>Beds:</strong> {{ room.beds }}</div>
         </div>
-        <div class="action">
-          <div class="price">${{ room.price }}<span>/night</span></div>
-          <div class="note">Prices subject to taxes and fees</div>
-          <button @click="continueBooking">Continue</button>
+
+        <!-- ✨ Amenities -->
+        <div class="amenities">
+          <h2>Amenities</h2>
+          <ul>
+            <li v-for="(a, i) in room.amenities" :key="i">
+              <span>✔️</span> {{ a }}
+            </li>
+          </ul>
         </div>
+
+        <!-- 🚀 CTA -->
+        <router-link
+          :to="{ path: '/search/contact', query: { room_id: room.id } }"
+          class="cta-button"
+        >
+          Book This Room
+        </router-link>
       </div>
     </div>
   </div>
@@ -45,192 +61,167 @@ export default {
   name: 'RoomDetails',
   data() {
     return {
-      currentImage: 'https://via.placeholder.com/800x500?text=Room+Image+1',
-      thumbnails: [
-        'https://via.placeholder.com/800x500?text=Room+Image+1',
-        'https://via.placeholder.com/800x500?text=Room+Image+2',
-        'https://via.placeholder.com/800x500?text=Room+Image+3'
-      ],
-      room: {
-        name: 'Deluxe Suite',
-        description: '2 Guests · 1 King Bed · 45 m²',
-        details: 'Our Deluxe Suite features spacious living area, premium amenities, and stunning views. Enjoy complimentary Wi-Fi, minibar, and 24/7 room service.',
-        amenities: ['Free Wi-Fi', 'Minibar', 'Room Service', 'Air Conditioning', 'Ocean View'],
-        price: 320
-      }
+      room: null,
+      loading: true
     };
   },
-  methods: {
-    continueBooking() {
-      this.$router.push('/book');
+  async created() {
+    const roomId = this.$route.query.room_id;
+    if (!roomId) return console.error('Missing room ID');
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/room/${roomId}`);
+      if (!res.ok) throw new Error('Failed to fetch room');
+      this.room = await res.json();
+    } catch (err) {
+      console.error('Room fetch failed:', err.message);
+    } finally {
+      this.loading = false;
     }
   }
 };
 </script>
 
 <style scoped>
-.container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 2rem;
-}
-
-.steps {
+.room-wrapper {
   display: flex;
-  list-style: none;
-  padding: 0;
-  margin-bottom: 2rem;
-  justify-content: space-between;
-  border-bottom: 1px solid #ddd;
-  counter-reset: step;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: #f7f7f8;
+  padding-bottom: 2rem;
 }
 
-.steps li {
-  position: relative;
+.loader {
   text-align: center;
-  flex: 1;
-  padding-bottom: 1rem;
-  font-weight: 500;
-  color: #999;
+  margin-top: 2rem;
+  font-size: 1.1rem;
+  color: #555;
 }
 
-.steps li.active {
-  color: #4f46e5;
-  font-weight: 600;
+/* Hero Image */
+.hero-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-bottom: 5px solid #e5e5e5;
 }
 
-.steps li.active::after {
-  background: #4f46e5;
+/* Thumbnail gallery */
+.gallery-row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  overflow-x: auto;
+  background-color: #fff;
+  box-shadow: inset 0 -1px 0 #eee;
 }
 
-.card {
-  background: #fff;
+.gallery-row img {
+  height: 100px;
+  width: 150px;
+  object-fit: cover;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
+  transition: transform 0.2s ease;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.card-header {
-  background: #4f46e5;
-  color: #fff;
-  padding: 1.2rem 1.6rem;
+.gallery-row img:hover {
+  transform: scale(1.03);
+}
+
+/* Details Content */
+.details-section {
+  padding: 2rem;
+  max-width: 1000px;
+  margin: auto;
+  background: white;
+  margin-top: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.top-bar h1 {
+  font-size: 2rem;
+  margin: 0;
+}
+
+.price {
   font-size: 1.2rem;
   font-weight: 600;
+  color: #4f46e5;
 }
 
-.card-body {
-  padding: 2rem;
+.description {
+  font-size: 1rem;
+  color: #444;
+  margin-bottom: 1rem;
 }
 
-.image-gallery {
+.meta {
   display: flex;
   gap: 2rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  color: #333;
 }
 
-.main-image img {
-  width: 100%;
-  max-width: 600px;
-  border-radius: 10px;
+/* Amenities */
+.amenities h2 {
+  margin-bottom: 0.5rem;
 }
 
-.thumbnails {
+.amenities ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.5rem 1rem;
+}
+
+.amenities li {
   display: flex;
-  gap: 0.8rem;
-  margin-top: 1rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #222;
 }
 
-.thumbnails img {
-  width: 100px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 6px;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.3s;
-}
-
-.thumbnails img.active,
-.thumbnails img:hover {
-  opacity: 1;
-  border: 2px solid #4f46e5;
-}
-
-.room-info h2 {
-  font-size: 1.6rem;
-  margin-bottom: 0.5rem;
-  color: #2d3748;
-}
-
-.room-info .subtitle {
-  color: #6b7280;
-  margin-bottom: 1rem;
-}
-
-.room-info p {
-  font-size: 1rem;
-  color: #4a5568;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-}
-
-.Amenities h3 {
-  margin-bottom: 0.5rem;
-  font-size: 1.2rem;
-  color: #2d3748;
-}
-
-.Amenities ul {
-  list-style: disc;
-  padding-left: 1.2rem;
-  color: #4a5568;
-}
-
-.Amenities li {
-  margin-bottom: 0.4rem;
-}
-
-.action {
-  border-top: 1px solid #e5e7eb;
-  padding-top: 1.5rem;
+/* CTA */
+.cta-button {
+  display: inline-block;
   margin-top: 2rem;
-  text-align: right;
-}
-
-.action .price {
-  font-size: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #4f46e5;
+  color: white;
   font-weight: 600;
-  color: #4f46e5;
-  margin-bottom: 0.2rem;
-}
-
-.action .price span {
-  font-size: 1rem;
-  font-weight: normal;
-  color: #6b7280;
-}
-
-.action .note {
-  font-size: 0.85rem;
-  color: #9ca3af;
-  margin-bottom: 1rem;
-}
-
-.action button {
-  background: #4f46e5;
-  color: #fff;
-  padding: 0.8rem 1.4rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
+  border-radius: 8px;
+  text-decoration: none;
   transition: background 0.3s;
 }
 
-.action button:hover {
-  background: #4338ca;
+.cta-button:hover {
+  background-color: #4338ca;
 }
-</style>
 
+.back-button {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.back-button:hover {
+  color: #3730a3;
+}
+
+</style>

@@ -29,8 +29,11 @@
   </section>
 </template>
 
+
+
 <script>
 import { getUserProfile } from '../services/services';
+import { useUserStore } from '../stores/userStore';
 
 export default {
   name: 'Dashboard',
@@ -47,13 +50,17 @@ export default {
   },
   async mounted() {
     try {
+      const store = useUserStore(); // ✅ get the store instance
       this.user = await getUserProfile();
+      store.setUser(this.user); // ✅ pass actual user data
+      console.log('User profile loaded and stored:', this.user);
     } catch (err) {
       console.error('Failed to load profile:', err.message);
     }
   }
 };
 </script>
+
 
 <style scoped>
 .dashboard-container {

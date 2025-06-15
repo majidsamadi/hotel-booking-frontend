@@ -87,10 +87,10 @@ export default {
   color: #fff;
 }
 
-.search-content {
+/* .search-content {
   background: white;
   padding: 2rem;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
+} */
 </style>

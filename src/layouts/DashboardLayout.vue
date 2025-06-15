@@ -53,6 +53,7 @@ export default {
   grid-template-columns: 220px 1fr;
   height: 100vh;
   background: #f5f7fa;
+  overflow-y: scroll;
 }
 
 /* Sidebar */
@@ -115,6 +116,6 @@ header h1 {
 }
 .widgets {
 
-  overflow-y: scroll;
+
 }
 </style>
